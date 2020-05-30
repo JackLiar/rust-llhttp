@@ -1,0 +1,19 @@
+[package]
+name = "llhttp-sys"
+version = "0.0.1"
+authors = ["Jack Liar <15205739+JackLiar@users.noreply.github.com>"]
+description = "llhttp bindings for Rust"
+edition = "2018"
+keywords = ["http", "nodejs", "llhttp"]
+
+[lib]
+doctest=false
+
+[dependencies]
+
+[build-dependencies]
+log = "0.4"
+env_logger = "0.7"
+pkg-config = "0.3"
+
+bindgen = { version = "0.54.0" }

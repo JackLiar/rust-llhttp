@@ -1,0 +1,2 @@
+[workspace]
+members = ["llhttp-sys", "llhttp"]
