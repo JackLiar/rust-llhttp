@@ -9,4 +9,5 @@ fn main() {
     llhttp_bindings
         .write_to_file("src/raw.rs")
         .expect("Unable to generate llhttp bindings");
+    println!("cargo:rustc-link-lib=llhttp");
 }
