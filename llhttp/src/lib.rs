@@ -13,6 +13,7 @@ use llhttp::{llhttp_cb, llhttp_data_cb};
 pub type CallBack = llhttp_cb;
 pub type DataCallBack = llhttp_data_cb;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Settings {
     settings: llhttp::llhttp_settings_s,
 }
