@@ -8,7 +8,8 @@ use std::os::raw::c_int;
 
 use num_traits::FromPrimitive;
 
-use llhttp::{llhttp_cb, llhttp_data_cb, llhttp_t, size_t};
+use llhttp::{llhttp_cb, llhttp_data_cb};
+pub use llhttp::{llhttp_t, size_t};
 
 pub type CallBack = llhttp_cb;
 pub type DataCallBack = llhttp_data_cb;
