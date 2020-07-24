@@ -20,4 +20,3 @@ bindgen = { version = "0.54.1" }
 
 [features]
 static = []
-dynamic = []

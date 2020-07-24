@@ -9,8 +9,10 @@ fn main() {
     llhttp_bindings
         .write_to_file("src/raw.rs")
         .expect("Unable to generate llhttp bindings");
+
     #[cfg(feature = "static")]
     println!("cargo:rustc-link-lib=static=llhttp");
-    #[cfg(feature = "shared")]
-    println!("cargo:rustc-link-lib=shared=llhttp");
+
+    #[cfg(not(feature = "static"))]
+    println!("cargo:rustc-link-lib=llhttp");
 }
