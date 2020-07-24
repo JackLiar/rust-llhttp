@@ -11,3 +11,6 @@ enum-primitive-derive = "0.1.2"
 num-traits = "0.2.11"
 
 llhttp-sys = {version = "0.0.1", path = "../llhttp-sys"}
+
+[features]
+static = ["llhttp-sys/static"]
