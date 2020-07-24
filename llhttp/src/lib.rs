@@ -133,6 +133,7 @@ impl Settings {
 }
 
 /// llhttp parser
+#[derive(Clone)]
 pub struct Parser {
     parser: llhttp::llhttp_t,
     settings: Settings,
