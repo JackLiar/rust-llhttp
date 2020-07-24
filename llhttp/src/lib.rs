@@ -8,7 +8,7 @@ use std::os::raw::c_int;
 
 use num_traits::FromPrimitive;
 
-use llhttp::{llhttp_cb, llhttp_data_cb};
+use llhttp::{llhttp_cb, llhttp_data_cb, llhttp_t, size_t};
 
 pub type CallBack = llhttp_cb;
 pub type DataCallBack = llhttp_data_cb;
@@ -133,14 +133,14 @@ impl Settings {
 
 /// llhttp parser
 pub struct Parser {
-    parser: llhttp::llhttp__internal_s,
+    parser: llhttp::llhttp_t,
     settings: Settings,
 }
 
 impl Parser {
     /// Create a new llhttp parser
     pub fn new(settings: Settings, lltype: Type) -> Parser {
-        let mut parser = llhttp::llhttp__internal_s {
+        let mut parser = llhttp::llhttp_t {
             _index: 0,
             _span_pos0: std::ptr::null_mut(),
             _span_cb0: std::ptr::null_mut(),
