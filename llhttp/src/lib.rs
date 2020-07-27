@@ -8,8 +8,8 @@ use std::os::raw::c_int;
 
 use num_traits::FromPrimitive;
 
+pub use llhttp::llhttp_t;
 use llhttp::{llhttp_cb, llhttp_data_cb};
-pub use llhttp::{llhttp_t, size_t};
 
 pub type CallBack = llhttp_cb;
 pub type DataCallBack = llhttp_data_cb;
@@ -36,30 +36,30 @@ impl Into<llhttp::llhttp_type_t> for Type {
 #[derive(Primitive)]
 #[repr(C)]
 pub enum Error {
-    OK = llhttp::llhttp_errno_HPE_OK as isize,
-    INTERNAL = llhttp::llhttp_errno_HPE_INTERNAL as isize,
-    STRICT = llhttp::llhttp_errno_HPE_STRICT as isize,
-    LF_EXPECTED = llhttp::llhttp_errno_HPE_LF_EXPECTED as isize,
-    UNEXPECTED_CONTENT_LENGTH = llhttp::llhttp_errno_HPE_UNEXPECTED_CONTENT_LENGTH as isize,
-    CLOSED_CONNECTION = llhttp::llhttp_errno_HPE_CLOSED_CONNECTION as isize,
-    INVALID_METHOD = llhttp::llhttp_errno_HPE_INVALID_METHOD as isize,
-    INVALID_URL = llhttp::llhttp_errno_HPE_INVALID_URL as isize,
-    INVALID_CONSTANT = llhttp::llhttp_errno_HPE_INVALID_CONSTANT as isize,
-    INVALID_VERSION = llhttp::llhttp_errno_HPE_INVALID_VERSION as isize,
-    INVALID_HEADER_TOKEN = llhttp::llhttp_errno_HPE_INVALID_HEADER_TOKEN as isize,
-    INVALID_CONTENT_LENGTH = llhttp::llhttp_errno_HPE_INVALID_CONTENT_LENGTH as isize,
-    INVALID_CHUNK_SIZE = llhttp::llhttp_errno_HPE_INVALID_CHUNK_SIZE as isize,
-    INVALID_STATUS = llhttp::llhttp_errno_HPE_INVALID_STATUS as isize,
-    INVALID_EOF_STATE = llhttp::llhttp_errno_HPE_INVALID_EOF_STATE as isize,
-    INVALID_TRANSFER_ENCODING = llhttp::llhttp_errno_HPE_INVALID_TRANSFER_ENCODING as isize,
-    CB_MESSAGE_BEGIN = llhttp::llhttp_errno_HPE_CB_MESSAGE_BEGIN as isize,
-    CB_HEADERS_COMPLETE = llhttp::llhttp_errno_HPE_CB_HEADERS_COMPLETE as isize,
-    CB_MESSAGE_COMPLETE = llhttp::llhttp_errno_HPE_CB_MESSAGE_COMPLETE as isize,
-    CB_CHUNK_HEADER = llhttp::llhttp_errno_HPE_CB_CHUNK_HEADER as isize,
-    CB_CHUNK_COMPLETE = llhttp::llhttp_errno_HPE_CB_CHUNK_COMPLETE as isize,
-    PAUSED = llhttp::llhttp_errno_HPE_PAUSED as isize,
-    PAUSED_UPGRADE = llhttp::llhttp_errno_HPE_PAUSED_UPGRADE as isize,
-    USER = llhttp::llhttp_errno_HPE_USER as isize,
+    Ok = llhttp::llhttp_errno_HPE_OK as isize,
+    Internal = llhttp::llhttp_errno_HPE_INTERNAL as isize,
+    Strict = llhttp::llhttp_errno_HPE_STRICT as isize,
+    LFExpected = llhttp::llhttp_errno_HPE_LF_EXPECTED as isize,
+    UnexpectedContentLength = llhttp::llhttp_errno_HPE_UNEXPECTED_CONTENT_LENGTH as isize,
+    ClosedConnection = llhttp::llhttp_errno_HPE_CLOSED_CONNECTION as isize,
+    InvalidMethod = llhttp::llhttp_errno_HPE_INVALID_METHOD as isize,
+    InvalidUrl = llhttp::llhttp_errno_HPE_INVALID_URL as isize,
+    InvalidConstant = llhttp::llhttp_errno_HPE_INVALID_CONSTANT as isize,
+    InvalidVersion = llhttp::llhttp_errno_HPE_INVALID_VERSION as isize,
+    InvalidHeaderToken = llhttp::llhttp_errno_HPE_INVALID_HEADER_TOKEN as isize,
+    InvalidContentLength = llhttp::llhttp_errno_HPE_INVALID_CONTENT_LENGTH as isize,
+    InvalidChunkSize = llhttp::llhttp_errno_HPE_INVALID_CHUNK_SIZE as isize,
+    InvalidStatus = llhttp::llhttp_errno_HPE_INVALID_STATUS as isize,
+    InvalidEOFState = llhttp::llhttp_errno_HPE_INVALID_EOF_STATE as isize,
+    InvalidTransferEncoding = llhttp::llhttp_errno_HPE_INVALID_TRANSFER_ENCODING as isize,
+    CBMessageBegin = llhttp::llhttp_errno_HPE_CB_MESSAGE_BEGIN as isize,
+    CBHeadersComplete = llhttp::llhttp_errno_HPE_CB_HEADERS_COMPLETE as isize,
+    CBMessageComplete = llhttp::llhttp_errno_HPE_CB_MESSAGE_COMPLETE as isize,
+    CBChunkHeader = llhttp::llhttp_errno_HPE_CB_CHUNK_HEADER as isize,
+    CBChunkComplete = llhttp::llhttp_errno_HPE_CB_CHUNK_COMPLETE as isize,
+    Paused = llhttp::llhttp_errno_HPE_PAUSED as isize,
+    PausedUpgrade = llhttp::llhttp_errno_HPE_PAUSED_UPGRADE as isize,
+    User = llhttp::llhttp_errno_HPE_USER as isize,
 }
 
 #[derive(Debug, Primitive)]
@@ -173,11 +173,7 @@ impl Parser {
     pub fn parse(&mut self, data: &[u8]) -> Error {
         let err;
         unsafe {
-            err = llhttp::llhttp_execute(
-                &mut self.parser,
-                data.as_ptr() as *const i8,
-                data.len() as llhttp::size_t,
-            );
+            err = llhttp::llhttp_execute(&mut self.parser, data.as_ptr() as *const i8, data.len());
         }
         match Error::from_u32(err) {
             Some(i) => i,
