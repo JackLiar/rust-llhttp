@@ -37,7 +37,7 @@ fn find_llhttp() -> Result<PathBuf> {
         link_libs.push(format!("{}=llhttp", link_kind));
 
         println!(
-            "cargo:warning=building with llhttp with {} library @ {:?}, libs={:?}, link_paths=[{:?}], include_paths=[{:?}]",
+            "cargo:warning=building with llhttp using environment variable with {} library @ {:?}, libs={:?}, link_paths=[{:?}], include_paths=[{:?}]",
             link_kind,
             prefix,
             link_libs,
@@ -58,7 +58,7 @@ fn find_llhttp() -> Result<PathBuf> {
             .probe("llhttp")?;
 
         println!(
-            "cargo:warning=building with llhttp {} with {} library, libs={:?}, link_paths={:?}, include_paths={:?}",
+            "cargo:warning=building with llhttp using pkgconfig {} with {} library, libs={:?}, link_paths={:?}, include_paths={:?}",
             libllhttp.version, link_kind, libllhttp.libs, libllhttp.link_paths, libllhttp.include_paths
         );
 
@@ -72,7 +72,7 @@ fn find_llhttp() -> Result<PathBuf> {
 
 fn main() -> Result<()> {
     let _ = find_llhttp().with_context(|| {
-        anyhow!("please download and install llhttp-cmake from https://www.hyperscan.io/")
+        anyhow!("please download and install llhttp from https://github.com/nodejs/llhttp or https://github.com/JackLiar/llhttp-cmake")
     })?;
 
     let llhttp_bindings = bindgen::Builder::default().header("src/llhttp.h");
