@@ -4,9 +4,10 @@ extern crate num_traits;
 
 extern crate llhttp_sys as llhttp;
 
+use std::ops::{Deref, DerefMut};
 use std::os::raw::c_int;
 
-use num_traits::FromPrimitive;
+use num_traits::{FromPrimitive, ToPrimitive};
 
 pub use llhttp::llhttp_t;
 use llhttp::{llhttp_cb, llhttp_data_cb};
@@ -15,11 +16,23 @@ pub type CallBack = llhttp_cb;
 pub type DataCallBack = llhttp_data_cb;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Settings {
-    settings: llhttp::llhttp_settings_s,
+pub struct Settings(llhttp::llhttp_settings_t);
+
+impl Deref for Settings {
+    type Target = llhttp::llhttp_settings_t;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Settings {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 #[repr(C)]
+#[derive(Primitive)]
 pub enum Type {
     BOTH = llhttp::llhttp_type_HTTP_BOTH as isize,
     REQUEST = llhttp::llhttp_type_HTTP_REQUEST as isize,
@@ -33,8 +46,8 @@ impl Into<llhttp::llhttp_type_t> for Type {
     }
 }
 
-#[derive(Primitive)]
 #[repr(C)]
+#[derive(Primitive)]
 pub enum Error {
     Ok = llhttp::llhttp_errno_HPE_OK as isize,
     Internal = llhttp::llhttp_errno_HPE_INTERNAL as isize,
@@ -62,6 +75,7 @@ pub enum Error {
     User = llhttp::llhttp_errno_HPE_USER as isize,
 }
 
+#[repr(C)]
 #[derive(Debug, Primitive)]
 pub enum Method {
     DELETE = llhttp::llhttp_method_HTTP_DELETE as isize,
@@ -99,6 +113,17 @@ pub enum Method {
     UNLINK = llhttp::llhttp_method_HTTP_UNLINK as isize,
     SOURCE = llhttp::llhttp_method_HTTP_SOURCE as isize,
     PRI = llhttp::llhttp_method_HTTP_PRI as isize,
+    DESCRIBE = llhttp::llhttp_method_HTTP_DESCRIBE as isize,
+    ANNOUNCE = llhttp::llhttp_method_HTTP_ANNOUNCE as isize,
+    SETUP = llhttp::llhttp_method_HTTP_SETUP as isize,
+    PLAY = llhttp::llhttp_method_HTTP_PLAY as isize,
+    PAUSE = llhttp::llhttp_method_HTTP_PAUSE as isize,
+    TEARDOWN = llhttp::llhttp_method_HTTP_TEARDOWN as isize,
+    GET_PARAMETER = llhttp::llhttp_method_HTTP_GET_PARAMETER as isize,
+    SET_PARAMETER = llhttp::llhttp_method_HTTP_SET_PARAMETER as isize,
+    REDIRECT = llhttp::llhttp_method_HTTP_REDIRECT as isize,
+    RECORD = llhttp::llhttp_method_HTTP_RECORD as isize,
+    FLUSH = llhttp::llhttp_method_HTTP_FLUSH as isize,
 }
 
 impl Settings {
@@ -106,10 +131,14 @@ impl Settings {
         let mut settings = llhttp::llhttp_settings_s {
             on_message_begin: None,
             on_url: None,
+            on_url_complete: None,
             on_status: None,
+            on_status_complete: None,
             on_header_field: None,
             on_header_value: None,
             on_headers_complete: None,
+            on_header_field_complete: None,
+            on_header_value_complete: None,
             on_body: None,
             on_message_complete: None,
             on_chunk_header: None,
@@ -118,18 +147,15 @@ impl Settings {
         unsafe {
             llhttp::llhttp_settings_init(&mut settings);
         }
-        Settings { settings }
+        Settings(settings)
     }
+}
 
-    #[inline]
-    pub fn get_inner(&self) -> &llhttp::llhttp_settings_s {
-        &self.settings
-    }
-
-    #[inline]
-    pub fn get_inner_mut(&mut self) -> &llhttp::llhttp_settings_s {
-        &mut self.settings
-    }
+#[repr(u8)]
+#[derive(Primitive)]
+pub enum LenientFlags {
+    HEADERS = llhttp::llhttp_lenient_flags_LENIENT_HEADERS as u8,
+    CHUNKED_LENGTH = llhttp::llhttp_lenient_flags_LENIENT_CHUNKED_LENGTH as u8,
 }
 
 /// llhttp parser
@@ -162,9 +188,10 @@ impl Parser {
             status_code: 0,
             finish: 0,
             settings: std::ptr::null_mut(),
+            lenient_flags: LenientFlags::HEADERS.to_u8().unwrap(),
         };
         unsafe {
-            llhttp::llhttp_init(&mut parser, lltype.into(), settings.get_inner());
+            llhttp::llhttp_init(&mut parser, lltype.into(), settings.deref());
         }
         Parser { parser, settings }
     }
@@ -220,12 +247,31 @@ impl Parser {
     pub fn status_code(&self) -> u16 {
         self.parser.status_code
     }
+
     #[inline]
     pub fn method(&self) -> Method {
         match Method::from_u8(self.parser.method) {
             Some(m) => m,
             None => unreachable!(),
         }
+    }
+
+    #[inline]
+    pub fn settings(&mut self) -> &mut Settings {
+        &mut self.settings
+    }
+}
+
+impl Deref for Parser {
+    type Target = llhttp::llhttp_t;
+    fn deref(&self) -> &Self::Target {
+        &self.parser
+    }
+}
+
+impl DerefMut for Parser {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.parser
     }
 }
 
