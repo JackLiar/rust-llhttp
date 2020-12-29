@@ -5,6 +5,7 @@ extern crate num_traits;
 extern crate llhttp_sys as llhttp;
 
 use std::ffi::CStr;
+use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -47,7 +48,7 @@ impl Settings {
 #[derive(Clone)]
 pub struct Parser<'a> {
     _llhttp: llhttp::llhttp_t,
-    _settings: Option<&'a Settings>,
+    _settings: PhantomData<&'a Settings>,
 }
 
 impl<'a> Parser<'a> {
@@ -77,13 +78,12 @@ impl<'a> Parser<'a> {
         };
         Parser {
             _llhttp,
-            _settings: None,
+            _settings: PhantomData,
         }
     }
 
     #[inline]
     pub fn init(&mut self, settings: &'a Settings, lltype: Type) {
-        self._settings = Some(settings);
         unsafe {
             llhttp::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
         }
