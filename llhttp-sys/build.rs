@@ -1,20 +1,17 @@
 use std::env;
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "gen")]
 extern crate bindgen;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
 
 fn find_llhttp() -> Result<PathBuf> {
     println!("cargo:rerun-if-env-changed=LLHTTP_ROOT");
     println!("cargo:rerun-if-env-changed=PKG_CONFIG_PATH");
     println!("cargo:rerun-if-env-changed=LD_LIBRARY_PATH");
 
-    let link_kind = if cfg!(feature = "static") {
-        "static"
-    } else {
-        "dylib"
-    };
+    let link_kind = if cfg!(feature = "static") { "static" } else { "dylib" };
 
     if let Ok(prefix) = env::var("LLHTTP_ROOT") {
         let prefix = Path::new(&prefix);
@@ -25,10 +22,7 @@ fn find_llhttp() -> Result<PathBuf> {
         let inc_path = prefix.join("include");
         let link_path = prefix.join("lib");
         if link_path.exists() && link_path.is_dir() {
-            println!(
-                "cargo:rustc-link-search=native={}",
-                link_path.to_string_lossy()
-            );
+            println!("cargo:rustc-link-search=native={}", link_path.to_string_lossy());
         } else {
             bail!("`$LLHTTP_ROOT/lib` subdirectory not found.");
         }
@@ -70,27 +64,62 @@ fn find_llhttp() -> Result<PathBuf> {
     }
 }
 
-fn main() -> Result<()> {
-    let _ = find_llhttp().with_context(|| {
-        anyhow!("please download and install llhttp from https://github.com/nodejs/llhttp or https://github.com/JackLiar/llhttp-cmake")
-    })?;
+#[cfg(feature = "gen")]
+fn generate_binding(inc_dir: &Path, out_dir: &Path) -> Result<()> {
+    let out_file = out_dir.join("llhttp.rs");
+    let inc_file = inc_dir.join("llhttp.h");
+    let inc_file = inc_file.to_str().expect("header file");
 
-    let llhttp_bindings = bindgen::Builder::default().header("src/llhttp.h");
+    println!(
+        "cargo:warning=generating raw llhttp binding file @ {} from {}",
+        out_file.display(),
+        inc_file,
+    );
+
+    println!("cargo:rerun-if-changed={}", inc_file);
+
+    let llhttp_bindings = bindgen::Builder::default().header(inc_file);
 
     #[cfg(target_os = "macos")]
     let llhttp_bindings = llhttp_bindings
         .blacklist_type("^__darwin_.*")
         .blacklist_type("^_opaque_.*");
 
-    let llhttp_bindings = llhttp_bindings
+    llhttp_bindings
+        .use_core()
+        .ctypes_prefix("::libc")
+        .whitelist_var("^llhttp_.*")
+        .whitelist_type("^llhttp_.*")
+        .whitelist_function("^llhttp_.*")
         .size_t_is_usize(true)
         .rust_target(bindgen::LATEST_STABLE_RUST)
+        .derive_copy(true)
+        .derive_debug(true)
+        .derive_default(true)
+        .derive_partialeq(true)
         .generate()
-        .expect("Unable to generate llhttp bindings");
+        .map_err(|_| Error::msg("generate binding files"))?
+        .write_to_file(out_file)
+        .with_context(|| "write wrapper")?;
 
-    llhttp_bindings
-        .write_to_file("src/raw.rs")
-        .expect("Unable to generate llhttp bindings");
+    Ok(())
+}
+
+#[cfg(not(feature = "gen"))]
+fn generate_binding(_: &Path, out_dir: &Path) -> Result<()> {
+    std::fs::copy("src/llhttp.rs", out_dir.join("llhttp.rs"))
+        .map(|_| ())
+        .with_context(|| "copy binding file")
+}
+
+fn main() -> Result<()> {
+    let inc_dir = find_llhttp().with_context(|| {
+        anyhow!("please download and install llhttp from https://github.com/nodejs/llhttp or https://github.com/JackLiar/llhttp-cmake")
+    })?;
+    let out_dir = env::var("OUT_DIR")?;
+    let out_dir = Path::new(&out_dir);
+
+    generate_binding(&inc_dir, &out_dir)?;
 
     Ok(())
 }

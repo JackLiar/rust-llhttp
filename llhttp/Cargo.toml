@@ -14,3 +14,4 @@ llhttp-sys = {version = "0.0.1", path = "../llhttp-sys"}
 
 [features]
 static = ["llhttp-sys/static"]
+gen = ["llhttp-sys/gen"]
