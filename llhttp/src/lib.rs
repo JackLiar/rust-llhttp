@@ -46,14 +46,13 @@ impl Settings {
 
 /// llhttp parser
 #[derive(Clone)]
-pub struct Parser<'a> {
+pub struct Parser {
     _llhttp: llhttp::llhttp_t,
-    _settings: PhantomData<&'a Settings>,
 }
 
-impl<'a> Parser<'a> {
+impl Parser {
     /// Create a new llhttp parser
-    pub fn new() -> Parser<'a> {
+    pub fn new() -> Parser {
         let _llhttp = llhttp::llhttp_t {
             _index: 0,
             _span_pos0: std::ptr::null_mut(),
@@ -76,14 +75,11 @@ impl<'a> Parser<'a> {
             settings: std::ptr::null_mut(),
             lenient_flags: LenientFlags::HEADERS.to_u8().unwrap(),
         };
-        Parser {
-            _llhttp,
-            _settings: PhantomData,
-        }
+        Parser { _llhttp }
     }
 
     #[inline]
-    pub fn init(&mut self, settings: &'a Settings, lltype: Type) {
+    pub fn init(&mut self, settings: &Settings, lltype: Type) {
         unsafe {
             llhttp::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
         }
@@ -174,14 +170,14 @@ impl<'a> Parser<'a> {
     }
 }
 
-impl<'a> Deref for Parser<'a> {
+impl Deref for Parser {
     type Target = llhttp::llhttp_t;
     fn deref(&self) -> &Self::Target {
         &self._llhttp
     }
 }
 
-impl<'a> DerefMut for Parser<'a> {
+impl DerefMut for Parser {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self._llhttp
     }
