@@ -10,7 +10,7 @@ use std::ops::{Deref, DerefMut};
 use num_traits::{FromPrimitive, ToPrimitive};
 
 mod consts;
-use consts::*;
+pub use consts::*;
 
 pub type CallBack = llhttp::llhttp_cb;
 pub type DataCallBack = llhttp::llhttp_data_cb;
