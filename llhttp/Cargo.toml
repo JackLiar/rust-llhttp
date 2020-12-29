@@ -13,5 +13,5 @@ num-traits = "0.2"
 llhttp-sys = {version = "0.0.1", path = "../llhttp-sys"}
 
 [features]
-static = ["llhttp-sys/static"]
 gen = ["llhttp-sys/gen"]
+static = ["llhttp-sys/static"]

@@ -4,19 +4,21 @@ extern crate num_traits;
 
 extern crate llhttp_sys as llhttp;
 
+use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::c_int;
 
 use num_traits::{FromPrimitive, ToPrimitive};
 
-pub use llhttp::llhttp_t;
-use llhttp::{llhttp_cb, llhttp_data_cb};
+mod consts;
+use consts::*;
 
-pub type CallBack = llhttp_cb;
-pub type DataCallBack = llhttp_data_cb;
+pub type CallBack = llhttp::llhttp_cb;
+pub type DataCallBack = llhttp::llhttp_data_cb;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Settings(llhttp::llhttp_settings_t);
+
+unsafe impl Send for Settings {}
 
 impl Deref for Settings {
     type Target = llhttp::llhttp_settings_t;
@@ -31,144 +33,27 @@ impl DerefMut for Settings {
     }
 }
 
-#[repr(C)]
-#[derive(Primitive)]
-pub enum Type {
-    BOTH = llhttp::llhttp_type_HTTP_BOTH as isize,
-    REQUEST = llhttp::llhttp_type_HTTP_REQUEST as isize,
-    RESPONSE = llhttp::llhttp_type_HTTP_RESPONSE as isize,
-}
-
-impl Into<llhttp::llhttp_type_t> for Type {
-    #[inline(always)]
-    fn into(self) -> llhttp::llhttp_type_t {
-        self as llhttp::llhttp_type_t
-    }
-}
-
-#[repr(C)]
-#[derive(Primitive)]
-pub enum Error {
-    Ok = llhttp::llhttp_errno_HPE_OK as isize,
-    Internal = llhttp::llhttp_errno_HPE_INTERNAL as isize,
-    Strict = llhttp::llhttp_errno_HPE_STRICT as isize,
-    LFExpected = llhttp::llhttp_errno_HPE_LF_EXPECTED as isize,
-    UnexpectedContentLength = llhttp::llhttp_errno_HPE_UNEXPECTED_CONTENT_LENGTH as isize,
-    ClosedConnection = llhttp::llhttp_errno_HPE_CLOSED_CONNECTION as isize,
-    InvalidMethod = llhttp::llhttp_errno_HPE_INVALID_METHOD as isize,
-    InvalidUrl = llhttp::llhttp_errno_HPE_INVALID_URL as isize,
-    InvalidConstant = llhttp::llhttp_errno_HPE_INVALID_CONSTANT as isize,
-    InvalidVersion = llhttp::llhttp_errno_HPE_INVALID_VERSION as isize,
-    InvalidHeaderToken = llhttp::llhttp_errno_HPE_INVALID_HEADER_TOKEN as isize,
-    InvalidContentLength = llhttp::llhttp_errno_HPE_INVALID_CONTENT_LENGTH as isize,
-    InvalidChunkSize = llhttp::llhttp_errno_HPE_INVALID_CHUNK_SIZE as isize,
-    InvalidStatus = llhttp::llhttp_errno_HPE_INVALID_STATUS as isize,
-    InvalidEOFState = llhttp::llhttp_errno_HPE_INVALID_EOF_STATE as isize,
-    InvalidTransferEncoding = llhttp::llhttp_errno_HPE_INVALID_TRANSFER_ENCODING as isize,
-    CBMessageBegin = llhttp::llhttp_errno_HPE_CB_MESSAGE_BEGIN as isize,
-    CBHeadersComplete = llhttp::llhttp_errno_HPE_CB_HEADERS_COMPLETE as isize,
-    CBMessageComplete = llhttp::llhttp_errno_HPE_CB_MESSAGE_COMPLETE as isize,
-    CBChunkHeader = llhttp::llhttp_errno_HPE_CB_CHUNK_HEADER as isize,
-    CBChunkComplete = llhttp::llhttp_errno_HPE_CB_CHUNK_COMPLETE as isize,
-    Paused = llhttp::llhttp_errno_HPE_PAUSED as isize,
-    PausedUpgrade = llhttp::llhttp_errno_HPE_PAUSED_UPGRADE as isize,
-    User = llhttp::llhttp_errno_HPE_USER as isize,
-}
-
-#[repr(C)]
-#[derive(Debug, Primitive)]
-pub enum Method {
-    DELETE = llhttp::llhttp_method_HTTP_DELETE as isize,
-    GET = llhttp::llhttp_method_HTTP_GET as isize,
-    HEAD = llhttp::llhttp_method_HTTP_HEAD as isize,
-    POST = llhttp::llhttp_method_HTTP_POST as isize,
-    PUT = llhttp::llhttp_method_HTTP_PUT as isize,
-    CONNECT = llhttp::llhttp_method_HTTP_CONNECT as isize,
-    OPTIONS = llhttp::llhttp_method_HTTP_OPTIONS as isize,
-    TRACE = llhttp::llhttp_method_HTTP_TRACE as isize,
-    COPY = llhttp::llhttp_method_HTTP_COPY as isize,
-    LOCK = llhttp::llhttp_method_HTTP_LOCK as isize,
-    MKCOL = llhttp::llhttp_method_HTTP_MKCOL as isize,
-    MOVE = llhttp::llhttp_method_HTTP_MOVE as isize,
-    PROPFIND = llhttp::llhttp_method_HTTP_PROPFIND as isize,
-    PROPPATCH = llhttp::llhttp_method_HTTP_PROPPATCH as isize,
-    SEARCH = llhttp::llhttp_method_HTTP_SEARCH as isize,
-    UNLOCK = llhttp::llhttp_method_HTTP_UNLOCK as isize,
-    BIND = llhttp::llhttp_method_HTTP_BIND as isize,
-    REBIND = llhttp::llhttp_method_HTTP_REBIND as isize,
-    UNBIND = llhttp::llhttp_method_HTTP_UNBIND as isize,
-    ACL = llhttp::llhttp_method_HTTP_ACL as isize,
-    REPORT = llhttp::llhttp_method_HTTP_REPORT as isize,
-    MKACTIVITY = llhttp::llhttp_method_HTTP_MKACTIVITY as isize,
-    CHECKOUT = llhttp::llhttp_method_HTTP_CHECKOUT as isize,
-    MERGE = llhttp::llhttp_method_HTTP_MERGE as isize,
-    MSEARCH = llhttp::llhttp_method_HTTP_MSEARCH as isize,
-    NOTIFY = llhttp::llhttp_method_HTTP_NOTIFY as isize,
-    SUBSCRIBE = llhttp::llhttp_method_HTTP_SUBSCRIBE as isize,
-    UNSUBSCRIBE = llhttp::llhttp_method_HTTP_UNSUBSCRIBE as isize,
-    PATCH = llhttp::llhttp_method_HTTP_PATCH as isize,
-    PURGE = llhttp::llhttp_method_HTTP_PURGE as isize,
-    MKCALENDAR = llhttp::llhttp_method_HTTP_MKCALENDAR as isize,
-    LINK = llhttp::llhttp_method_HTTP_LINK as isize,
-    UNLINK = llhttp::llhttp_method_HTTP_UNLINK as isize,
-    SOURCE = llhttp::llhttp_method_HTTP_SOURCE as isize,
-    PRI = llhttp::llhttp_method_HTTP_PRI as isize,
-    DESCRIBE = llhttp::llhttp_method_HTTP_DESCRIBE as isize,
-    ANNOUNCE = llhttp::llhttp_method_HTTP_ANNOUNCE as isize,
-    SETUP = llhttp::llhttp_method_HTTP_SETUP as isize,
-    PLAY = llhttp::llhttp_method_HTTP_PLAY as isize,
-    PAUSE = llhttp::llhttp_method_HTTP_PAUSE as isize,
-    TEARDOWN = llhttp::llhttp_method_HTTP_TEARDOWN as isize,
-    GET_PARAMETER = llhttp::llhttp_method_HTTP_GET_PARAMETER as isize,
-    SET_PARAMETER = llhttp::llhttp_method_HTTP_SET_PARAMETER as isize,
-    REDIRECT = llhttp::llhttp_method_HTTP_REDIRECT as isize,
-    RECORD = llhttp::llhttp_method_HTTP_RECORD as isize,
-    FLUSH = llhttp::llhttp_method_HTTP_FLUSH as isize,
-}
-
 impl Settings {
     pub fn new() -> Settings {
-        let mut settings = llhttp::llhttp_settings_s {
-            on_message_begin: None,
-            on_url: None,
-            on_url_complete: None,
-            on_status: None,
-            on_status_complete: None,
-            on_header_field: None,
-            on_header_value: None,
-            on_headers_complete: None,
-            on_header_field_complete: None,
-            on_header_value_complete: None,
-            on_body: None,
-            on_message_complete: None,
-            on_chunk_header: None,
-            on_chunk_complete: None,
-        };
+        let mut settings = Settings::default();
         unsafe {
-            llhttp::llhttp_settings_init(&mut settings);
+            llhttp::llhttp_settings_init(settings.deref_mut());
         }
-        Settings(settings)
+        settings
     }
-}
-
-#[repr(u8)]
-#[derive(Primitive)]
-pub enum LenientFlags {
-    HEADERS = llhttp::llhttp_lenient_flags_LENIENT_HEADERS as u8,
-    CHUNKED_LENGTH = llhttp::llhttp_lenient_flags_LENIENT_CHUNKED_LENGTH as u8,
 }
 
 /// llhttp parser
 #[derive(Clone)]
-pub struct Parser {
-    parser: llhttp::llhttp_t,
-    settings: Settings,
+pub struct Parser<'a> {
+    _llhttp: llhttp::llhttp_t,
+    _settings: Option<&'a Settings>,
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     /// Create a new llhttp parser
-    pub fn new(settings: Settings, lltype: Type) -> Parser {
-        let mut parser = llhttp::llhttp_t {
+    pub fn new() -> Parser<'a> {
+        let _llhttp = llhttp::llhttp_t {
             _index: 0,
             _span_pos0: std::ptr::null_mut(),
             _span_cb0: std::ptr::null_mut(),
@@ -190,17 +75,25 @@ impl Parser {
             settings: std::ptr::null_mut(),
             lenient_flags: LenientFlags::HEADERS.to_u8().unwrap(),
         };
-        unsafe {
-            llhttp::llhttp_init(&mut parser, lltype.into(), settings.deref());
+        Parser {
+            _llhttp,
+            _settings: None,
         }
-        Parser { parser, settings }
+    }
+
+    #[inline]
+    pub fn init(&mut self, settings: &'a Settings, lltype: Type) {
+        self._settings = Some(settings);
+        unsafe {
+            llhttp::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
+        }
     }
 
     #[inline]
     pub fn parse(&mut self, data: &[u8]) -> Error {
         let err;
         unsafe {
-            err = llhttp::llhttp_execute(&mut self.parser, data.as_ptr() as *const i8, data.len());
+            err = llhttp::llhttp_execute(self.deref_mut(), data.as_ptr() as *const i8, data.len());
         }
         match Error::from_u32(err) {
             Some(i) => i,
@@ -210,8 +103,7 @@ impl Parser {
 
     #[inline]
     pub fn finish(&mut self) -> Error {
-        let err;
-        unsafe { err = llhttp::llhttp_finish(&mut self.parser) }
+        let err = unsafe { llhttp::llhttp_finish(self.deref_mut()) };
         match Error::from_u32(err) {
             Some(i) => i,
             None => unreachable!(),
@@ -219,59 +111,79 @@ impl Parser {
     }
 
     #[inline]
-    pub fn message_needs_eof(&self) -> c_int {
-        unsafe { llhttp::llhttp_message_needs_eof(&self.parser) }
-    }
-
-    #[inline]
-    pub fn should_keep_alive(&self) -> c_int {
-        unsafe { llhttp::llhttp_should_keep_alive(&self.parser) }
-    }
-
-    #[inline]
-    pub fn pause(&mut self) {
-        unsafe { llhttp::llhttp_pause(&mut self.parser) }
-    }
-
-    #[inline]
-    pub fn resume(&mut self) {
-        unsafe { llhttp::llhttp_resume(&mut self.parser) }
-    }
-
-    #[inline]
-    pub fn resume_after_upgrade(&mut self) {
-        unsafe { llhttp::llhttp_resume_after_upgrade(&mut self.parser) }
-    }
-
-    #[inline]
-    pub fn status_code(&self) -> u16 {
-        self.parser.status_code
-    }
-
-    #[inline]
-    pub fn method(&self) -> Method {
-        match Method::from_u8(self.parser.method) {
-            Some(m) => m,
-            None => unreachable!(),
+    pub fn message_needs_eof(&self) -> bool {
+        unsafe {
+            match llhttp::llhttp_message_needs_eof(self.deref()) {
+                1 => true,
+                _ => false,
+            }
         }
     }
 
     #[inline]
-    pub fn settings(&mut self) -> &mut Settings {
-        &mut self.settings
+    pub fn should_keep_alive(&self) -> bool {
+        unsafe {
+            match llhttp::llhttp_should_keep_alive(self.deref()) {
+                1 => true,
+                _ => false,
+            }
+        }
+    }
+
+    #[inline]
+    pub fn pause(&mut self) {
+        unsafe { llhttp::llhttp_pause(self.deref_mut()) }
+    }
+
+    #[inline]
+    pub fn resume(&mut self) {
+        unsafe { llhttp::llhttp_resume(self.deref_mut()) }
+    }
+
+    #[inline]
+    pub fn resume_after_upgrade(&mut self) {
+        unsafe { llhttp::llhttp_resume_after_upgrade(self.deref_mut()) }
+    }
+
+    #[inline]
+    pub fn errno(&self) -> Error {
+        unsafe { Error::from_u32(llhttp::llhttp_get_errno(self.deref())).unwrap() }
+    }
+
+    #[inline]
+    pub fn get_error_reason(&self) -> &CStr {
+        unsafe { CStr::from_ptr(llhttp::llhttp_get_error_reason(self.deref())) }
+    }
+
+    #[inline]
+    pub fn get_error_pos(&self) -> &CStr {
+        unsafe { CStr::from_ptr(llhttp::llhttp_get_error_pos(self.deref())) }
+    }
+
+    #[inline]
+    pub fn status_code(&self) -> u16 {
+        self.deref().status_code
+    }
+
+    #[inline]
+    pub fn method(&self) -> Method {
+        match Method::from_u8(self.deref().method) {
+            Some(m) => m,
+            None => unreachable!(),
+        }
     }
 }
 
-impl Deref for Parser {
+impl<'a> Deref for Parser<'a> {
     type Target = llhttp::llhttp_t;
     fn deref(&self) -> &Self::Target {
-        &self.parser
+        &self._llhttp
     }
 }
 
-impl DerefMut for Parser {
+impl<'a> DerefMut for Parser<'a> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.parser
+        &mut self._llhttp
     }
 }
 
@@ -280,8 +192,39 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        assert_eq!(String::from("ACL"), format!("{:?}", Method::ACL));
-        // assert_eq!(2 + 2, 4);
+    fn test_method() {
+        let settings = Settings::new();
+        let mut parser = Parser::new();
+        parser.init(&settings, Type::BOTH);
+
+        let payload = r#"NOTIFY * HTTP/1.1\r
+        HOST: 239.255.255.250:1900\r
+        CACHE-CONTROL: max-age=60\r
+        LOCATION: http://192.168.2.1:5000/rootDesc.xml\r
+        SERVER: K2A5/OpenWrt/Barrier_Breaker__unknown_ UPnP/1.1 MiniUPnPd/1.8\r
+        NT: upnp:rootdevice\r
+        USN: uuid:0aeec1da-795c-448c-864b-11b838fe5945::upnp:rootdevice\r
+        NTS: ssdp:alive\r
+        OPT: "http://schemas.upnp.org/upnp/1/0/"; ns=01\r
+        01-NLS: 1\r
+        BOOTID.UPNP.ORG: 1\r
+        CONFIGID.UPNP.ORG: 1337\r\n\r\n"#;
+        parser.parse(payload.as_bytes());
+        assert!(matches!(parser.method(), Method::NOTIFY));
+
+        let payload = b"GET /ocsp-devid01/ME4wTKADAgEAMEUwQzBBMAkGBSsOAwIaBQAEFDOB0e%2FbaLCFIU0u76%2BMSmlkPCpsBBRXF%2B2iz9x8mKEQ4Py%2Bhy0s8uMXVAIITaFtmUYgLaY%3D HTTP/1.1\r\n
+        Host: ocsp.apple.com\r\n
+        Accept: */*\r\n
+        Accept-Language: zh-cn\r\n
+        Connection: keep-alive\r\n
+        Accept-Encoding: gzip, deflate\r\n
+        User-Agent: com.apple.trustd/2.0\r\n";
+
+        let mut parser = Parser::new();
+        parser.init(&settings, Type::BOTH);
+
+        parser.parse(payload);
+        println!("{:?}", parser.method());
+        assert!(matches!(parser.method(), Method::GET));
     }
 }
