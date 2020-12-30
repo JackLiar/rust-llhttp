@@ -2,10 +2,13 @@
 extern crate enum_primitive_derive;
 extern crate num_traits;
 
-extern crate llhttp_sys as llhttp;
+extern crate llhttp_sys;
+
+mod ffi {
+    pub use llhttp_sys::*;
+}
 
 use std::ffi::CStr;
-use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -13,16 +16,16 @@ use num_traits::{FromPrimitive, ToPrimitive};
 mod consts;
 pub use consts::*;
 
-pub type CallBack = llhttp::llhttp_cb;
-pub type DataCallBack = llhttp::llhttp_data_cb;
+pub type CallBack = ffi::llhttp_cb;
+pub type DataCallBack = ffi::llhttp_data_cb;
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct Settings(llhttp::llhttp_settings_t);
+pub struct Settings(ffi::llhttp_settings_t);
 
 unsafe impl Send for Settings {}
 
 impl Deref for Settings {
-    type Target = llhttp::llhttp_settings_t;
+    type Target = ffi::llhttp_settings_t;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -38,7 +41,7 @@ impl Settings {
     pub fn new() -> Settings {
         let mut settings = Settings::default();
         unsafe {
-            llhttp::llhttp_settings_init(settings.deref_mut());
+            ffi::llhttp_settings_init(settings.deref_mut());
         }
         settings
     }
@@ -47,13 +50,13 @@ impl Settings {
 /// llhttp parser
 #[derive(Clone)]
 pub struct Parser {
-    _llhttp: llhttp::llhttp_t,
+    _llhttp: ffi::llhttp_t,
 }
 
 impl Parser {
     /// Create a new llhttp parser
     pub fn new() -> Parser {
-        let _llhttp = llhttp::llhttp_t {
+        let _llhttp = ffi::llhttp_t {
             _index: 0,
             _span_pos0: std::ptr::null_mut(),
             _span_cb0: std::ptr::null_mut(),
@@ -81,7 +84,7 @@ impl Parser {
     #[inline]
     pub fn init(&mut self, settings: &Settings, lltype: Type) {
         unsafe {
-            llhttp::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
+            ffi::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
         }
     }
 
@@ -89,7 +92,7 @@ impl Parser {
     pub fn parse(&mut self, data: &[u8]) -> Error {
         let err;
         unsafe {
-            err = llhttp::llhttp_execute(self.deref_mut(), data.as_ptr() as *const i8, data.len());
+            err = ffi::llhttp_execute(self.deref_mut(), data.as_ptr() as *const i8, data.len());
         }
         match Error::from_u32(err) {
             Some(i) => i,
@@ -99,7 +102,7 @@ impl Parser {
 
     #[inline]
     pub fn finish(&mut self) -> Error {
-        let err = unsafe { llhttp::llhttp_finish(self.deref_mut()) };
+        let err = unsafe { ffi::llhttp_finish(self.deref_mut()) };
         match Error::from_u32(err) {
             Some(i) => i,
             None => unreachable!(),
@@ -109,7 +112,7 @@ impl Parser {
     #[inline]
     pub fn message_needs_eof(&self) -> bool {
         unsafe {
-            match llhttp::llhttp_message_needs_eof(self.deref()) {
+            match ffi::llhttp_message_needs_eof(self.deref()) {
                 1 => true,
                 _ => false,
             }
@@ -119,7 +122,7 @@ impl Parser {
     #[inline]
     pub fn should_keep_alive(&self) -> bool {
         unsafe {
-            match llhttp::llhttp_should_keep_alive(self.deref()) {
+            match ffi::llhttp_should_keep_alive(self.deref()) {
                 1 => true,
                 _ => false,
             }
@@ -128,32 +131,32 @@ impl Parser {
 
     #[inline]
     pub fn pause(&mut self) {
-        unsafe { llhttp::llhttp_pause(self.deref_mut()) }
+        unsafe { ffi::llhttp_pause(self.deref_mut()) }
     }
 
     #[inline]
     pub fn resume(&mut self) {
-        unsafe { llhttp::llhttp_resume(self.deref_mut()) }
+        unsafe { ffi::llhttp_resume(self.deref_mut()) }
     }
 
     #[inline]
     pub fn resume_after_upgrade(&mut self) {
-        unsafe { llhttp::llhttp_resume_after_upgrade(self.deref_mut()) }
+        unsafe { ffi::llhttp_resume_after_upgrade(self.deref_mut()) }
     }
 
     #[inline]
     pub fn errno(&self) -> Error {
-        unsafe { Error::from_u32(llhttp::llhttp_get_errno(self.deref())).unwrap() }
+        unsafe { Error::from_u32(ffi::llhttp_get_errno(self.deref())).unwrap() }
     }
 
     #[inline]
     pub fn get_error_reason(&self) -> &CStr {
-        unsafe { CStr::from_ptr(llhttp::llhttp_get_error_reason(self.deref())) }
+        unsafe { CStr::from_ptr(ffi::llhttp_get_error_reason(self.deref())) }
     }
 
     #[inline]
     pub fn get_error_pos(&self) -> &CStr {
-        unsafe { CStr::from_ptr(llhttp::llhttp_get_error_pos(self.deref())) }
+        unsafe { CStr::from_ptr(ffi::llhttp_get_error_pos(self.deref())) }
     }
 
     #[inline]
@@ -171,7 +174,7 @@ impl Parser {
 }
 
 impl Deref for Parser {
-    type Target = llhttp::llhttp_t;
+    type Target = ffi::llhttp_t;
     fn deref(&self) -> &Self::Target {
         &self._llhttp
     }
