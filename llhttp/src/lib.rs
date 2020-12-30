@@ -213,6 +213,11 @@ impl Parser {
     }
 
     #[inline]
+    pub fn data(&self) -> *mut libc::c_void {
+        self._llhttp.data
+    }
+
+    #[inline]
     pub fn method(&self) -> Method {
         match Method::from_u8(self._llhttp.method) {
             Some(m) => m,
