@@ -5,13 +5,14 @@ extern crate num_traits;
 
 extern crate llhttp_sys;
 
+use std::ffi::CStr;
+use std::marker::PhantomData;
+
+use num_traits::{FromPrimitive, ToPrimitive};
+
 mod ffi {
     pub use llhttp_sys::*;
 }
-
-use std::ffi::CStr;
-
-use num_traits::{FromPrimitive, ToPrimitive};
 
 mod consts;
 pub use consts::*;
@@ -97,13 +98,14 @@ impl Settings {
 
 /// llhttp parser
 #[derive(Clone)]
-pub struct Parser {
+pub struct Parser<'a> {
     _llhttp: ffi::llhttp_t,
+    _settings: PhantomData<&'a Settings>,
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     /// Create a new llhttp parser
-    pub fn new() -> Parser {
+    pub fn new() -> Parser<'a> {
         let _llhttp = ffi::llhttp_t {
             _index: 0,
             _span_pos0: std::ptr::null_mut(),
@@ -126,7 +128,10 @@ impl Parser {
             settings: std::ptr::null_mut(),
             lenient_flags: LenientFlags::HEADERS.to_u8().unwrap(),
         };
-        Parser { _llhttp }
+        Parser {
+            _llhttp,
+            _settings: PhantomData,
+        }
     }
 
     #[inline]
