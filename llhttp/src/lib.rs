@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate enum_primitive_derive;
+extern crate libc;
 extern crate num_traits;
 
 extern crate llhttp_sys;
@@ -9,7 +10,6 @@ mod ffi {
 }
 
 use std::ffi::CStr;
-use std::ops::{Deref, DerefMut};
 
 use num_traits::{FromPrimitive, ToPrimitive};
 
@@ -24,16 +24,64 @@ pub struct Settings(ffi::llhttp_settings_t);
 
 unsafe impl Send for Settings {}
 
-impl Deref for Settings {
-    type Target = ffi::llhttp_settings_t;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+macro_rules! cb_wrapper {
+    ($fname:ident, $func:ident) => {
+        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t) -> libc::c_int {
+            $func(&mut *(arg1 as *mut Parser))
+        }
+    };
 }
 
-impl DerefMut for Settings {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+macro_rules! data_cb_wrapper {
+    ($fname:ident, $func:ident) => {
+        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t) -> libc::c_int {
+            $func(&mut *(arg1 as *mut Parser))
+        }
+    };
+}
+
+impl Settings {
+    pub fn on_message_begin(&mut self, cb: CallBack) {
+        self.0.on_message_begin = cb;
+    }
+    pub fn on_url(&mut self, cb: DataCallBack) {
+        self.0.on_url = cb;
+    }
+    pub fn on_status(&mut self, cb: DataCallBack) {
+        self.0.on_status = cb;
+    }
+    pub fn on_header_field(&mut self, cb: DataCallBack) {
+        self.0.on_header_field = cb;
+    }
+    pub fn on_header_value(&mut self, cb: DataCallBack) {
+        self.0.on_header_value = cb;
+    }
+    pub fn on_headers_complete(&mut self, cb: CallBack) {
+        self.0.on_headers_complete = cb;
+    }
+    pub fn on_body(&mut self, cb: DataCallBack) {
+        self.0.on_body = cb;
+    }
+    pub fn on_message_complete(&mut self, cb: CallBack) {
+        self.0.on_message_complete = cb;
+    }
+    pub fn on_chunk_header(&mut self, cb: CallBack) {
+        self.0.on_chunk_header = cb;
+    }
+    pub fn on_chunk_complete(&mut self, cb: CallBack) {
+        self.0.on_chunk_complete = cb;
+    }
+    pub fn on_url_complete(&mut self, cb: CallBack) {
+        self.0.on_url_complete = cb;
+    }
+    pub fn on_status_complete(&mut self, cb: CallBack) {
+        self.0.on_status_complete = cb;
+    }
+    pub fn on_header_field_complete(&mut self, cb: CallBack) {
+        self.0.on_header_field_complete = cb;
+    }
+    pub fn on_header_value_complete(&mut self, cb: CallBack) {
+        self.0.on_header_value_complete = cb;
     }
 }
 
@@ -41,7 +89,7 @@ impl Settings {
     pub fn new() -> Settings {
         let mut settings = Settings::default();
         unsafe {
-            ffi::llhttp_settings_init(settings.deref_mut());
+            ffi::llhttp_settings_init(&mut settings.0);
         }
         settings
     }
@@ -84,7 +132,7 @@ impl Parser {
     #[inline]
     pub fn init(&mut self, settings: &Settings, lltype: Type) {
         unsafe {
-            ffi::llhttp_init(self.deref_mut(), lltype.into(), settings.deref());
+            ffi::llhttp_init(&mut self._llhttp, lltype.into(), &settings.0);
         }
     }
 
@@ -92,7 +140,7 @@ impl Parser {
     pub fn parse(&mut self, data: &[u8]) -> Error {
         let err;
         unsafe {
-            err = ffi::llhttp_execute(self.deref_mut(), data.as_ptr() as *const i8, data.len());
+            err = ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const i8, data.len());
         }
         match Error::from_u32(err) {
             Some(i) => i,
@@ -102,7 +150,7 @@ impl Parser {
 
     #[inline]
     pub fn finish(&mut self) -> Error {
-        let err = unsafe { ffi::llhttp_finish(self.deref_mut()) };
+        let err = unsafe { ffi::llhttp_finish(&mut self._llhttp) };
         match Error::from_u32(err) {
             Some(i) => i,
             None => unreachable!(),
@@ -112,7 +160,7 @@ impl Parser {
     #[inline]
     pub fn message_needs_eof(&self) -> bool {
         unsafe {
-            match ffi::llhttp_message_needs_eof(self.deref()) {
+            match ffi::llhttp_message_needs_eof(&self._llhttp) {
                 1 => true,
                 _ => false,
             }
@@ -122,7 +170,7 @@ impl Parser {
     #[inline]
     pub fn should_keep_alive(&self) -> bool {
         unsafe {
-            match ffi::llhttp_should_keep_alive(self.deref()) {
+            match ffi::llhttp_should_keep_alive(&self._llhttp) {
                 1 => true,
                 _ => false,
             }
@@ -131,58 +179,45 @@ impl Parser {
 
     #[inline]
     pub fn pause(&mut self) {
-        unsafe { ffi::llhttp_pause(self.deref_mut()) }
+        unsafe { ffi::llhttp_pause(&mut self._llhttp) }
     }
 
     #[inline]
     pub fn resume(&mut self) {
-        unsafe { ffi::llhttp_resume(self.deref_mut()) }
+        unsafe { ffi::llhttp_resume(&mut self._llhttp) }
     }
 
     #[inline]
     pub fn resume_after_upgrade(&mut self) {
-        unsafe { ffi::llhttp_resume_after_upgrade(self.deref_mut()) }
+        unsafe { ffi::llhttp_resume_after_upgrade(&mut self._llhttp) }
     }
 
     #[inline]
     pub fn errno(&self) -> Error {
-        unsafe { Error::from_u32(ffi::llhttp_get_errno(self.deref())).unwrap() }
+        unsafe { Error::from_u32(ffi::llhttp_get_errno(&self._llhttp)).unwrap() }
     }
 
     #[inline]
     pub fn get_error_reason(&self) -> &CStr {
-        unsafe { CStr::from_ptr(ffi::llhttp_get_error_reason(self.deref())) }
+        unsafe { CStr::from_ptr(ffi::llhttp_get_error_reason(&self._llhttp)) }
     }
 
     #[inline]
     pub fn get_error_pos(&self) -> &CStr {
-        unsafe { CStr::from_ptr(ffi::llhttp_get_error_pos(self.deref())) }
+        unsafe { CStr::from_ptr(ffi::llhttp_get_error_pos(&self._llhttp)) }
     }
 
     #[inline]
     pub fn status_code(&self) -> u16 {
-        self.deref().status_code
+        self._llhttp.status_code
     }
 
     #[inline]
     pub fn method(&self) -> Method {
-        match Method::from_u8(self.deref().method) {
+        match Method::from_u8(self._llhttp.method) {
             Some(m) => m,
             None => unreachable!(),
         }
-    }
-}
-
-impl Deref for Parser {
-    type Target = ffi::llhttp_t;
-    fn deref(&self) -> &Self::Target {
-        &self._llhttp
-    }
-}
-
-impl DerefMut for Parser {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self._llhttp
     }
 }
 
