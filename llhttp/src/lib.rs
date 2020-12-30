@@ -34,8 +34,8 @@ macro_rules! cb_wrapper {
 
 macro_rules! data_cb_wrapper {
     ($fname:ident, $func:ident) => {
-        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t) -> libc::c_int {
-            $func(&mut *(arg1 as *mut Parser))
+        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t, at: *const ::libc::c_char, length: usize) -> libc::c_int {
+            $func(&mut *(arg1 as *mut Parser), at, length)
         }
     };
 }
