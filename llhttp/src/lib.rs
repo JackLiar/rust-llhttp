@@ -224,6 +224,11 @@ impl Parser {
             None => unreachable!(),
         }
     }
+
+    #[inline]
+    pub fn reset(&mut self) {
+        unsafe { ffi::llhttp_reset(&self._llhttp as *const _ as *mut _) }
+    }
 }
 
 #[cfg(test)]
