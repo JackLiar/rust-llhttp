@@ -29,7 +29,7 @@ unsafe impl Send for Settings {}
 macro_rules! cb_wrapper {
     ($fname:ident, $func:ident) => {
         unsafe extern "C" fn $fname(arg1: *mut llhttp::ffi::llhttp_t) -> libc::c_int {
-            $func(&mut *(arg1 as *mut Parser))
+            $func(&mut *(arg1 as *mut llhttp::Parser))
         }
     };
 }
@@ -42,7 +42,7 @@ macro_rules! data_cb_wrapper {
             at: *const ::libc::c_char,
             length: usize,
         ) -> libc::c_int {
-            $func(&mut *(arg1 as *mut Parser), at, length)
+            $func(&mut *(arg1 as *mut llhttp::Parser), at, length)
         }
     };
 }
