@@ -8,7 +8,7 @@ extern crate llhttp_sys;
 use std::ffi::CStr;
 use std::marker::PhantomData;
 
-use num_traits::{FromPrimitive, ToPrimitive};
+use num_traits::FromPrimitive;
 
 pub mod ffi {
     pub use llhttp_sys::*;
@@ -103,43 +103,13 @@ impl Settings {
 }
 
 /// llhttp parser
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Parser<'a> {
     _llhttp: ffi::llhttp_t,
     _settings: PhantomData<&'a Settings>,
 }
 
 impl<'a> Parser<'a> {
-    /// Create a new llhttp parser
-    pub fn new() -> Parser<'a> {
-        let _llhttp = ffi::llhttp_t {
-            _index: 0,
-            _span_pos0: std::ptr::null_mut(),
-            _span_cb0: std::ptr::null_mut(),
-            error: 0,
-            reason: std::ptr::null(),
-            error_pos: std::ptr::null(),
-            data: std::ptr::null_mut(),
-            _current: std::ptr::null_mut(),
-            content_length: 0,
-            type_: 0,
-            method: 0,
-            http_major: 0,
-            http_minor: 0,
-            header_state: 0,
-            flags: 0,
-            upgrade: 0,
-            status_code: 0,
-            finish: 0,
-            settings: std::ptr::null_mut(),
-            lenient_flags: LenientFlags::HEADERS.to_u8().unwrap(),
-        };
-        Parser {
-            _llhttp,
-            _settings: PhantomData,
-        }
-    }
-
     #[inline]
     pub fn init(&mut self, settings: &Settings, lltype: Type) {
         unsafe {
@@ -249,7 +219,7 @@ mod tests {
     #[test]
     fn test_method() {
         let settings = Settings::new();
-        let mut parser = Parser::new();
+        let mut parser = Parser::default();
         parser.init(&settings, Type::BOTH);
 
         let payload = r#"NOTIFY * HTTP/1.1\r
@@ -275,7 +245,7 @@ mod tests {
         Accept-Encoding: gzip, deflate\r\n
         User-Agent: com.apple.trustd/2.0\r\n";
 
-        let mut parser = Parser::new();
+        let mut parser = Parser::default();
         parser.init(&settings, Type::BOTH);
 
         parser.parse(payload);
