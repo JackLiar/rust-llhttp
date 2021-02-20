@@ -18,7 +18,7 @@ impl Into<ffi::llhttp_type_t> for Type {
 }
 
 #[repr(C)]
-#[derive(Primitive)]
+#[derive(Debug, Primitive)]
 pub enum Error {
     Ok = ffi::llhttp_errno_HPE_OK as isize,
     Internal = ffi::llhttp_errno_HPE_INTERNAL as isize,
