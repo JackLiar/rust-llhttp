@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 
 use num_traits::{FromPrimitive, ToPrimitive};
 
-mod ffi {
+pub mod ffi {
     pub use llhttp_sys::*;
 }
 
@@ -28,7 +28,7 @@ unsafe impl Send for Settings {}
 #[macro_export]
 macro_rules! cb_wrapper {
     ($fname:ident, $func:ident) => {
-        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t) -> libc::c_int {
+        unsafe extern "C" fn $fname(arg1: *mut llhttp::ffi::llhttp_t) -> libc::c_int {
             $func(&mut *(arg1 as *mut Parser))
         }
     };
@@ -37,7 +37,11 @@ macro_rules! cb_wrapper {
 #[macro_export]
 macro_rules! data_cb_wrapper {
     ($fname:ident, $func:ident) => {
-        unsafe extern "C" fn $fname(arg1: *mut ffi::llhttp_t, at: *const ::libc::c_char, length: usize) -> libc::c_int {
+        unsafe extern "C" fn $fname(
+            arg1: *mut llhttp::ffi::llhttp_t,
+            at: *const ::libc::c_char,
+            length: usize,
+        ) -> libc::c_int {
             $func(&mut *(arg1 as *mut Parser), at, length)
         }
     };
