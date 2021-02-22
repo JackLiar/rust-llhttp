@@ -3,7 +3,7 @@
 use crate::ffi;
 
 #[repr(u8)]
-#[derive(Primitive)]
+#[derive(Debug, Primitive)]
 pub enum Type {
     BOTH = ffi::llhttp_type_HTTP_BOTH as u8,
     REQUEST = ffi::llhttp_type_HTTP_REQUEST as u8,
