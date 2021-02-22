@@ -2,12 +2,12 @@
 
 use crate::ffi;
 
-#[repr(C)]
+#[repr(u8)]
 #[derive(Primitive)]
 pub enum Type {
-    BOTH = ffi::llhttp_type_HTTP_BOTH as isize,
-    REQUEST = ffi::llhttp_type_HTTP_REQUEST as isize,
-    RESPONSE = ffi::llhttp_type_HTTP_RESPONSE as isize,
+    BOTH = ffi::llhttp_type_HTTP_BOTH as u8,
+    REQUEST = ffi::llhttp_type_HTTP_REQUEST as u8,
+    RESPONSE = ffi::llhttp_type_HTTP_RESPONSE as u8,
 }
 
 impl Into<ffi::llhttp_type_t> for Type {

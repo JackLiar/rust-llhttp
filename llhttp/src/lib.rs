@@ -214,6 +214,14 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
+    pub fn lltype(&self) -> Type {
+        match Type::from_u8(self._llhttp.type_) {
+            Some(t) => t,
+            None => unreachable!(),
+        }
+    }
+
+    #[inline]
     pub fn reset(&mut self) {
         unsafe { ffi::llhttp_reset(&self._llhttp as *const _ as *mut _) }
     }
