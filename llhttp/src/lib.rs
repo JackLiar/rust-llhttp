@@ -199,6 +199,13 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
+    pub fn set_data(&mut self, data: *mut libc::c_void) -> *mut libc::c_void {
+        let old = self._llhttp.data;
+        self._llhttp.data = data;
+        old
+    }
+
+    #[inline]
     pub fn method(&self) -> Method {
         match Method::from_u8(self._llhttp.method) {
             Some(m) => m,
