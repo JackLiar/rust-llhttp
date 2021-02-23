@@ -204,17 +204,10 @@ impl<'a> Parser<'a> {
 
     #[inline]
     /// Retrieve old data, and set new data
-    pub fn set_data<T>(&mut self, data: Option<Box<T>>) -> Option<Box<T>> {
-        if self._llhttp.data.is_null() {
-            None
-        } else {
-            let old = unsafe { Some(Box::from_raw(self._llhttp.data as *mut T)) };
-            match data {
-                Some(data) => self._llhttp.data = Box::into_raw(data) as *mut libc::c_void,
-                None => self._llhttp.data = std::ptr::null_mut(),
-            };
-            old
-        }
+    pub fn set_data<T>(&mut self, data: *mut T) -> *mut T {
+        let old = self._llhttp.data as *mut T;
+        self._llhttp.data = data as *mut libc::c_void;
+        old
     }
 
     #[inline]
