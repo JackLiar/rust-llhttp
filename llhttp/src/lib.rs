@@ -194,8 +194,8 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
-    pub fn data(&self) -> *mut libc::c_void {
-        self._llhttp.data
+    pub unsafe fn data<T>(&self) -> &mut T {
+        &mut *(self._llhttp.data as *mut T)
     }
 
     #[inline]
