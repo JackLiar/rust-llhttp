@@ -194,8 +194,12 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
-    pub unsafe fn data<T>(&self) -> &mut T {
-        &mut *(self._llhttp.data as *mut T)
+    pub unsafe fn data<T>(&self) -> Option<&mut T> {
+        if self._llhttp.data.is_null() {
+            None
+        } else {
+            Some(&mut *(self._llhttp.data as *mut T))
+        }
     }
 
     #[inline]
