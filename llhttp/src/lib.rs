@@ -7,6 +7,7 @@ extern crate llhttp_sys;
 
 use std::ffi::CStr;
 use std::marker::PhantomData;
+use std::os::raw::c_char;
 
 use num_traits::FromPrimitive;
 
@@ -121,7 +122,7 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self, data: &[u8]) -> Error {
         let err;
         unsafe {
-            err = ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const i8, data.len());
+            err = ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const c_char, data.len());
         }
         match Error::from_u32(err) {
             Some(i) => i,
