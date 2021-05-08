@@ -82,15 +82,15 @@ fn generate_binding(inc_dir: &Path, out_dir: &Path) -> Result<()> {
 
     #[cfg(target_os = "macos")]
     let llhttp_bindings = llhttp_bindings
-        .blacklist_type("^__darwin_.*")
-        .blacklist_type("^_opaque_.*");
+        .blocklist_type("^__darwin_.*")
+        .blocklist_type("^_opaque_.*");
 
     llhttp_bindings
         .use_core()
         .ctypes_prefix("::libc")
-        .whitelist_var("^llhttp_.*")
-        .whitelist_type("^llhttp_.*")
-        .whitelist_function("^llhttp_.*")
+        .allowlist_var("^llhttp_.*")
+        .allowlist_type("^llhttp_.*")
+        .allowlist_function("^llhttp_.*")
         .size_t_is_usize(true)
         .rust_target(bindgen::LATEST_STABLE_RUST)
         .derive_copy(true)
