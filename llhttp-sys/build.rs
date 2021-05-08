@@ -97,6 +97,11 @@ fn generate_binding(inc_dir: &Path, out_dir: &Path) -> Result<()> {
         .derive_debug(true)
         .derive_default(true)
         .derive_partialeq(true)
+        .newtype_enum("llhttp_errno")
+        .newtype_enum("llhttp_flags")
+        .newtype_enum("llhttp_lenient_flags")
+        .newtype_enum("llhttp_type")
+        .newtype_enum("llhttp_method")
         .generate()
         .map_err(|_| Error::msg("generate binding files"))?
         .write_to_file(out_file)

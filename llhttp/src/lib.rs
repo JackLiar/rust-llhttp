@@ -1,15 +1,10 @@
-#[macro_use]
-extern crate enum_primitive_derive;
 extern crate libc;
-extern crate num_traits;
 
 extern crate llhttp_sys;
 
 use std::ffi::CStr;
 use std::marker::PhantomData;
-use std::os::raw::c_char;
-
-use num_traits::FromPrimitive;
+use std::os::raw::{c_char, c_uint};
 
 pub mod ffi {
     pub use llhttp_sys::*;
@@ -120,23 +115,12 @@ impl<'a> Parser<'a> {
 
     #[inline]
     pub fn parse(&mut self, data: &[u8]) -> Error {
-        let err;
-        unsafe {
-            err = ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const c_char, data.len());
-        }
-        match Error::from_u32(err) {
-            Some(i) => i,
-            None => unreachable!(),
-        }
+        unsafe { ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const c_char, data.len()) }
     }
 
     #[inline]
     pub fn finish(&mut self) -> Error {
-        let err = unsafe { ffi::llhttp_finish(&mut self._llhttp) };
-        match Error::from_u32(err) {
-            Some(i) => i,
-            None => unreachable!(),
-        }
+        unsafe { ffi::llhttp_finish(&mut self._llhttp) }
     }
 
     #[inline]
@@ -176,7 +160,7 @@ impl<'a> Parser<'a> {
 
     #[inline]
     pub fn errno(&self) -> Error {
-        unsafe { Error::from_u32(ffi::llhttp_get_errno(&self._llhttp)).unwrap() }
+        unsafe { ffi::llhttp_get_errno(&self._llhttp) }
     }
 
     #[inline]
@@ -213,18 +197,12 @@ impl<'a> Parser<'a> {
 
     #[inline]
     pub fn method(&self) -> Method {
-        match Method::from_u8(self._llhttp.method) {
-            Some(m) => m,
-            None => unreachable!(),
-        }
+        ffi::llhttp_method(self._llhttp.method as c_uint)
     }
 
     #[inline]
     pub fn lltype(&self) -> Type {
-        match Type::from_u8(self._llhttp.type_) {
-            Some(t) => t,
-            None => unreachable!(),
-        }
+        ffi::llhttp_type_t(self._llhttp.type_ as c_uint)
     }
 
     #[inline]
@@ -241,7 +219,7 @@ mod tests {
     fn test_method() {
         let settings = Settings::new();
         let mut parser = Parser::default();
-        parser.init(&settings, Type::BOTH);
+        parser.init(&settings, Type::HTTP_BOTH);
 
         let payload = r#"NOTIFY * HTTP/1.1\r
         HOST: 239.255.255.250:1900\r
@@ -256,7 +234,7 @@ mod tests {
         BOOTID.UPNP.ORG: 1\r
         CONFIGID.UPNP.ORG: 1337\r\n\r\n"#;
         parser.parse(payload.as_bytes());
-        assert!(matches!(parser.method(), Method::NOTIFY));
+        assert!(matches!(parser.method(), Method::HTTP_NOTIFY));
 
         let payload = b"GET /ocsp-devid01/ME4wTKADAgEAMEUwQzBBMAkGBSsOAwIaBQAEFDOB0e%2FbaLCFIU0u76%2BMSmlkPCpsBBRXF%2B2iz9x8mKEQ4Py%2Bhy0s8uMXVAIITaFtmUYgLaY%3D HTTP/1.1\r\n
         Host: ocsp.apple.com\r\n
@@ -267,10 +245,10 @@ mod tests {
         User-Agent: com.apple.trustd/2.0\r\n";
 
         let mut parser = Parser::default();
-        parser.init(&settings, Type::BOTH);
+        parser.init(&settings, Type::HTTP_BOTH);
 
         parser.parse(payload);
         println!("{:?}", parser.method());
-        assert!(matches!(parser.method(), Method::GET));
+        assert!(matches!(parser.method(), Method::HTTP_GET));
     }
 }
