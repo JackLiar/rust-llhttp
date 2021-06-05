@@ -189,9 +189,13 @@ impl<'a> Parser<'a> {
 
     #[inline]
     /// Retrieve old data, and set new data
-    pub fn set_data<T>(&mut self, data: *mut T) -> *mut T {
-        let old = self._llhttp.data as *mut T;
-        self._llhttp.data = data as *mut libc::c_void;
+    pub fn set_data<T>(&mut self, data: Box<T>) -> Option<Box<T>> {
+        let old = if !self._llhttp.data.is_null() {
+            unsafe { Some(Box::from_raw(self._llhttp.data as *mut T)) }
+        } else {
+            None
+        };
+        self._llhttp.data = Box::into_raw(data) as *mut libc::c_void;
         old
     }
 
