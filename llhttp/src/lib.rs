@@ -45,7 +45,7 @@ macro_rules! data_cb_wrapper {
             length: usize,
         ) -> libc::c_int {
             let parser = &mut *(arg1 as *mut llhttp::Parser);
-            let data = std::slice::from_raw_parts(at, length);
+            let data = std::slice::from_raw_parts(at as *const u8, length);
             match $func(parser, data) {
                 Ok(_) => 0,
                 Err(_) => -1,
