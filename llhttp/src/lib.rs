@@ -6,12 +6,13 @@ use std::ffi::CStr;
 use std::marker::PhantomData;
 use std::os::raw::{c_char, c_uint};
 
+mod consts;
 pub mod ffi {
     pub use llhttp_sys::*;
 }
 
-mod consts;
 pub use consts::*;
+use ffi::llhttp_method_name;
 
 pub type CallBack = ffi::llhttp_cb;
 pub type DataCallBack = ffi::llhttp_data_cb;
@@ -222,6 +223,18 @@ impl<'a, T> Parser<'a, T> {
     }
 
     #[inline]
+    pub fn method_name(&self) -> &str {
+        unsafe {
+            let method = llhttp_method_name(self.method());
+            let method = std::ffi::CStr::from_ptr(method);
+            match method.to_str() {
+                Err(_) => unreachable!(),
+                Ok(method) => method,
+            }
+        }
+    }
+
+    #[inline]
     pub fn lltype(&self) -> Type {
         ffi::llhttp_type_t(self._llhttp.type_ as c_uint)
     }
@@ -229,6 +242,16 @@ impl<'a, T> Parser<'a, T> {
     #[inline]
     pub fn reset(&mut self) {
         unsafe { ffi::llhttp_reset(&self._llhttp as *const _ as *mut _) }
+    }
+
+    #[inline]
+    pub fn major(&mut self) -> u8 {
+        self._llhttp.http_major
+    }
+
+    #[inline]
+    pub fn minor(&mut self) -> u8 {
+        self._llhttp.http_minor
     }
 }
 
