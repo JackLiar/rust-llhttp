@@ -245,12 +245,12 @@ impl<'a, T> Parser<'a, T> {
     }
 
     #[inline]
-    pub fn major(&mut self) -> u8 {
+    pub fn major(&self) -> u8 {
         self._llhttp.http_major
     }
 
     #[inline]
-    pub fn minor(&mut self) -> u8 {
+    pub fn minor(&self) -> u8 {
         self._llhttp.http_minor
     }
 }
