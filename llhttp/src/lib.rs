@@ -111,12 +111,13 @@ impl Settings {
 
 /// llhttp parser
 #[derive(Clone, Default)]
-pub struct Parser<'a> {
+pub struct Parser<'a, T> {
     _llhttp: ffi::llhttp_t,
     _settings: PhantomData<&'a Settings>,
+    _data: PhantomData<T>,
 }
 
-impl<'a> Parser<'a> {
+impl<'a, T> Parser<'a, T> {
     #[inline]
     pub fn init(&mut self, settings: &Settings, lltype: Type) {
         unsafe {
@@ -190,7 +191,7 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
-    pub fn data<T>(&self) -> Option<&mut T> {
+    pub fn data(&self) -> Option<&mut T> {
         if self._llhttp.data.is_null() {
             None
         } else {
@@ -200,7 +201,7 @@ impl<'a> Parser<'a> {
 
     #[inline]
     /// Retrieve old data, and set new data
-    pub fn set_data<T>(&mut self, data: Option<Box<T>>) -> Option<Box<T>> {
+    pub fn set_data(&mut self, data: Option<Box<T>>) -> Option<Box<T>> {
         let old = if !self._llhttp.data.is_null() {
             unsafe { Some(Box::from_raw(self._llhttp.data as *mut T)) }
         } else {
@@ -238,7 +239,7 @@ mod tests {
     #[test]
     fn test_method() {
         let settings = Settings::new();
-        let mut parser = Parser::default();
+        let mut parser = Parser::<()>::default();
         parser.init(&settings, Type::HTTP_BOTH);
 
         let payload = r#"NOTIFY * HTTP/1.1\r
@@ -264,7 +265,7 @@ mod tests {
         Accept-Encoding: gzip, deflate\r\n
         User-Agent: com.apple.trustd/2.0\r\n";
 
-        let mut parser = Parser::default();
+        let mut parser = Parser::<()>::default();
         parser.init(&settings, Type::HTTP_BOTH);
 
         parser.parse(payload);
