@@ -23,10 +23,10 @@ unsafe impl Send for Settings {}
 
 #[macro_export]
 macro_rules! cb_wrapper {
-    ($fname:ident, $func:ident) => {
+    ($fname:ident, $func:ident, $data_type:ty) => {
         #[inline]
         unsafe extern "C" fn $fname(arg1: *mut llhttp::ffi::llhttp_t) -> libc::c_int {
-            let parser = &mut *(arg1 as *mut llhttp::Parser);
+            let parser = &mut *(arg1 as *mut llhttp::Parser<$data_type>);
             match $func(parser) {
                 Ok(_) => 0,
                 Err(_) => -1,
@@ -37,14 +37,14 @@ macro_rules! cb_wrapper {
 
 #[macro_export]
 macro_rules! data_cb_wrapper {
-    ($fname:ident, $func:ident) => {
+    ($fname:ident, $func:ident, $data_type:ty) => {
         #[inline]
         unsafe extern "C" fn $fname(
             arg1: *mut llhttp::ffi::llhttp_t,
             at: *const ::libc::c_char,
             length: usize,
         ) -> libc::c_int {
-            let parser = &mut *(arg1 as *mut llhttp::Parser);
+            let parser = &mut *(arg1 as *mut llhttp::Parser<$data_type>);
             let data = std::slice::from_raw_parts(at as *const u8, length);
             match $func(parser, data) {
                 Ok(_) => 0,
